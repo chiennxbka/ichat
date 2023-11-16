@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.samsung.sds.ichat.payload.AuthenticationRequest;
 import com.samsung.sds.ichat.payload.RegisterRequest;
 import com.samsung.sds.ichat.response.AuthenticationResponse;
-import com.samsung.sds.ichat.service.impl.AuthenticationService;
+import com.samsung.sds.ichat.service.auth.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,6 +43,4 @@ public class AuthenticationController {
   ) throws IOException {
     service.refreshToken(request, response);
   }
-
-
 }

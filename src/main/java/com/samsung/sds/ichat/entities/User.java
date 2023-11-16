@@ -3,6 +3,7 @@ package com.samsung.sds.ichat.entities;
 import com.samsung.sds.ichat.enums.Role;
 
 import javax.persistence.*;
+import java.security.Principal;
 import java.util.Collection;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -18,17 +19,17 @@ import org.springframework.security.core.userdetails.UserDetails;
 @AllArgsConstructor
 @Entity
 @Table(name = "tbl_user")
-public class User implements UserDetails {
+public class User implements UserDetails, Principal {
 
   @Id
   @GeneratedValue
   private Integer id;
   private String firstname;
   private String lastname;
+  private String name;
   @Column(name = "email", unique = true)
   private String email;
   private String password;
-  private String status;
   private String profile;
   @Enumerated(EnumType.STRING)
   private Role role;
@@ -36,6 +37,10 @@ public class User implements UserDetails {
   private boolean connected = false;
   @OneToMany(mappedBy = "user")
   private List<Token> tokens;
+
+  public User(String name) {
+    this.name = name;
+  }
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -70,5 +75,10 @@ public class User implements UserDetails {
   @Override
   public boolean isEnabled() {
     return true;
+  }
+
+  @Override
+  public String getName() {
+    return this.id.toString();
   }
 }

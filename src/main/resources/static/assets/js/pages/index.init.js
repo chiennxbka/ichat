@@ -1,4 +1,7 @@
-var input, filter, ul, li, a, i, j, div;
+let input, filter, ul, li, a, i, j, div;
+let stompClient = null;
+let recipientId = null;
+const userId = sessionStorage.getItem('userId');
 
 function searchUser() {
     for (input = document.getElementById("serachChatUser"), filter = input.value.toUpperCase(), ul = document.querySelector(".chat-room-list"), li = ul.getElementsByTagName("li"), i = 0; i < li.length; i++) {
@@ -22,12 +25,72 @@ function searchContactOnModal() {
     for (i = 0; i < li.length; i++) contactName = li[i], txtValue = contactName.querySelector("h5").innerText, -1 < txtValue.toUpperCase().indexOf(filter) ? li[i].style.display = "" : li[i].style.display = "none"
 }
 
-!function () {
-    var n = "users-chat", l = "assets/images/users/user-dummy-img.jpg", o = "users",
-        s = window.location.origin + "/api/v1/", c = "", d = 1;
+function onConnected(frame) {
+    let url = stompClient.ws._transport.url;
+    let sessionId = url.replace("ws://localhost:8082/ws",  "");
+    sessionId = sessionId.replace("/websocket", "");
+    sessionId = sessionId.substring(sessionId.lastIndexOf('/') + 1);
+    // Subscribe to the Public Topic
+    stompClient.subscribe('/user/'+ sessionId +'/queue/messages', onMessageReceived);
+}
 
+function onMessageReceived(payload) {
+    const body = JSON.parse(payload.body)
+    let i = 0;
+    if (body.from_id !== userId) {
+        const a = document.getElementById('users-chat').querySelector(".chat-conversation-list");
+        const avatar = (body.senderImg !== undefined && body.senderImg !== null) ? '<img src="' + body.senderImg + '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>' : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">JP</span><span class="user-status"></span></span></div>';
+        a.insertAdjacentHTML("beforeend", '<li class="chat-list left" id="chat-list-' + (i++) + '" > '
+          + '<div class="conversation-list">' +
+          '<div class="user-chat-content">                        ' +
+          '<div class="ctext-wrap">                            ' +
+          '<div class="ctext-wrap-content">                                ' +
+          '<p class="mb-0 ctext-content">                                    ' +
+          '' + body.msg + '                                ' +
+          '</p>                            ' +
+          '</div>                            ' +
+          '<div class="dropdown align-self-start message-box-drop">' +
+          '<a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                                    ' +
+          '<i class="ri-more-2-fill"></i>                                ' +
+          '</a>' +
+          '<div class="dropdown-menu">                                    ' +
+          '<a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="collapse" data-bs-target=".replyCollapse">Reply <i class="bx bx-share ms-2 text-muted"></i></a>' +
+          '<a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i class="bx bx-share-alt ms-2 text-muted"></i></a>' +
+          '<a class="dropdown-item d-flex align-items-center justify-content-between copy-message" href="#" id="copy-message-' + 1 + '">Copy <i class="bx bx-copy text-muted ms-2"></i></a>' +
+          '<a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>' +
+          '<a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Mark as Unread <i class="bx bx-message-error text-muted ms-2"></i></a>                                    ' +
+          '<a class="dropdown-item d-flex align-items-center justify-content-between delete-item" id="delete-item-' + 1 + '" href="#">Delete <i class="bx bx-trash text-muted ms-2"></i></a>' +
+          '</div></div></div>' +
+          '<div class="conversation-name">' +
+          '<small class="text-muted time">10:am</small>' +
+          '<span class="text-success check-message-icon"><i class="bx bx-check"></i></span></div></div></div></li>');
+        // a.insertAdjacentHTML("beforeend", '<li class="chat-list right" id="chat-list-' + h + '" > ' + '<div class="conversation-list">                    <div class="user-chat-content">                        <div class="ctext-wrap">                            <div class="ctext-wrap-content">                                <p class="mb-0 ctext-content">                                    ' + t + '                                </p>                            </div>                            <div class="dropdown align-self-start message-box-drop">                                <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                                    <i class="ri-more-2-fill"></i>                                </a>                                <div class="dropdown-menu">                                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="collapse" data-bs-target=".replyCollapse">Reply <i class="bx bx-share ms-2 text-muted"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i class="bx bx-share-alt ms-2 text-muted"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between copy-message" href="#" id="copy-message-' + h + '">Copy <i class="bx bx-copy text-muted ms-2"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Mark as Unread <i class="bx bx-message-error text-muted ms-2"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between delete-item" id="delete-item-' + h + '" href="#">Delete <i class="bx bx-trash text-muted ms-2"></i></a>                            </div>                        </div>                    </div>                    <div class="conversation-name">                        <small class="text-muted time">' + p() + '</small>                        <span class="text-success check-message-icon"><i class="bx bx-check"></i></span>                    </div>                </div>            </div>        </li>');
+        const s = document.getElementById("chat-list-" + 1);
+        s.querySelectorAll(".delete-item").forEach(function (e) {
+            e.addEventListener("click", function () {
+                a.removeChild(s)
+            })
+        }), s.querySelectorAll(".copy-message").forEach(function (e) {
+            e.addEventListener("click", function () {
+                s.childNodes[1].children[1].firstElementChild.firstElementChild.getAttribute("id");
+                isText = s.childNodes[1].children[1].firstElementChild.firstElementChild.innerText, navigator.clipboard.writeText(isText)
+            })
+        })
+    }
+}
+
+function onError(error) {
+    console.log(error)
+}
+
+!function () {
+    let n = "users-chat", l = "assets/images/users/user-dummy-img.jpg", o = "users",
+      s = window.location.origin + "/api/v1/", c = "", d = 1;
+    const socket = new SockJS('/ws');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({ userId: sessionStorage.getItem('userId') }, onConnected, onError);
     function a() {
-        var a = document.getElementsByClassName("user-chat");
+        const a = document.getElementsByClassName("user-chat");
         document.querySelectorAll(".chat-user-list li a").forEach(function (e) {
             e.addEventListener("click", function (e) {
                 a.forEach(function (e) {
@@ -68,28 +131,43 @@ function searchContactOnModal() {
 
     e("users.json", function (e, t) {
         null !== e ? console.log("Something went wrong: " + e) : (t[0].favorites.forEach(function (e, t) {
-            var a = e.profile ? '<img src="' + e.profile + '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>' : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">JP</span><span class="user-status"></span></span></div>',
-                s = e.messagecount ? '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1">' + e.messagecount + "</span></div>" : "",
-                i = e.messagecount ? '<a href="javascript: void(0);" class="unread-msg-user">' : '<a href="javascript: void(0);">',
-                r = 1 === e.id ? "active" : "";
-            document.getElementById("favourite-users").innerHTML += '<li id="contact-id-' + e.id + '" data-name="favorite" class="' + r + '">                  ' + i + '                       <div class="d-flex align-items-center">                          <div class="chat-user-img online align-self-center me-2 ms-0">                              ' + a + '                          </div>                          <div class="overflow-hidden">                              <p class="text-truncate mb-0">' + e.name + "</p>                          </div>                          " + s + "                      </div>                  </a>              </li>"
+            const a = e.profile ? '<img src="' + e.profile + '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>' : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">JP</span><span class="user-status"></span></span></div>',
+              s = e.messagecount ? '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1">' + e.messagecount + "</span></div>" : "",
+              i = e.messagecount ? '<a href="javascript: void(0);" class="unread-msg-user">' : '<a href="javascript: void(0);">',
+              r = 1 === e.id ? "active" : "";
+            document.getElementById("favourite-users").innerHTML += '<li id="contact-id-' + e.id + '" value="' + e.id + '" data-name="favorite" class="' + r + '">' + i + '<div class="d-flex align-items-center">' + '<div class="chat-user-img online align-self-center me-2 ms-0">' +'' + a + '</div><div class="overflow-hidden">' +'<p class="text-truncate mb-0">' + e.name + "</p></div>" + s + "" +"</div></a></li>"
         }), t[0].users.forEach(function (e, t) {
-            var a = e.profile ? '<img src="' + e.profile + '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>' : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">JL</span><span class="user-status"></span></span></div>',
-                s = e.messagecount ? '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1">' + e.messagecount + "</span></div>" : "",
-                i = e.messagecount ? '<a href="javascript: void(0);" class="unread-msg-user">' : '<a href="javascript: void(0);">';
-            document.getElementById("usersList").innerHTML += '<li id="contact-id-' + e.id + '" data-name="direct-message">                  ' + i + '                   <div class="d-flex align-items-center">                      <div class="chat-user-img online align-self-center me-2 ms-0">                          ' + a + '                      </div>                      <div class="overflow-hidden">                          <p class="text-truncate mb-0">' + e.name + "</p>                      </div>                      " + s + "                  </div>              </a>          </li>"
+            const a = e.profile ? '<img src="' + e.profile + '" class="rounded-circle avatar-xs" alt=""><span class="user-status"></span>' : '<div class="avatar-xs"><span class="avatar-title rounded-circle bg-primary text-white"><span class="username">JL</span><span class="user-status"></span></span></div>',
+              s = e.messagecount ? '<div class="ms-auto"><span class="badge badge-soft-dark rounded p-1">' + e.messagecount + "</span></div>" : "",
+              i = e.messagecount ? '<a href="javascript: void(0);" class="unread-msg-user">' : '<a href="javascript: void(0);">';
+            document.getElementById("usersList").innerHTML += '<li id="contact-id-' + e.id + '" value="' + e.id + '" data-name="direct-message">' + i + '<div class="d-flex align-items-center"><div class="chat-user-img online align-self-center me-2 ms-0">' + a + '</div><div class="overflow-hidden"><p class="text-truncate mb-0">' + e.name + "</p></div>" + s + "</div></a></li>"
         }), t[0].channels.forEach(function (e, t) {
-            var a = e.messagecount ? '<div class="flex-shrink-0 ms-2"><span class="badge badge-soft-dark rounded p-1">' + e.messagecount + "</span></div>" : "",
-                s = (e.messagecount && e.messagecount, e.messagecount ? '<a href="javascript: void(0);" class="unread-msg-user">' : '<a href="javascript: void(0);">');
-            document.getElementById("channelList").innerHTML += '<li id="contact-id-' + e.id + '" data-name="channel">                ' + s + '                     <div class="d-flex align-items-center">                        <div class="flex-shrink-0 avatar-xs me-2">                            <span class="avatar-title rounded-circle bg-soft-light text-dark">#</span>                        </div>                        <div class="flex-grow-1 overflow-hidden">                            <p class="text-truncate mb-0">' + e.name + "</p>                        </div>                        <div>" + a + "</div>                        </div>                </a>            </li>"
+            const a = e.messagecount ? '<div class="flex-shrink-0 ms-2"><span class="badge badge-soft-dark rounded p-1">' + e.messagecount + "</span></div>" : "",
+              s = (e.messagecount && e.messagecount, e.messagecount ? '<a href="javascript: void(0);" class="unread-msg-user">' : '<a href="javascript: void(0);">');
+            document.getElementById("channelList").innerHTML += '<li id="contact-id-' + e.id + '" data-name="channel">' + s + '                     <div class="d-flex align-items-center">                        <div class="flex-shrink-0 avatar-xs me-2">                            <span class="avatar-title rounded-circle bg-soft-light text-dark">#</span></div><div class="flex-grow-1 overflow-hidden"><p class="text-truncate mb-0">' + e.name + "</p></div><div>" + a + "</div></div></a></li>"
         })), a(), document.querySelectorAll("#favourite-users li, #usersList li") && document.querySelectorAll("#favourite-users li, #usersList li").forEach(function (r) {
             r.addEventListener("click", function (e) {
-                o = "users", u(), n = "users-chat";
-                var t = r.getAttribute("id"), a = r.querySelector(".text-truncate").innerHTML;
-                document.querySelector(".user-profile-sidebar .user-name").innerHTML = a, document.getElementById("users-chat").querySelector(".text-truncate .user-profile-show").innerHTML = a, document.querySelector(".user-profile-desc .text-truncate").innerHTML = a, document.querySelector(".audiocallModal .text-truncate").innerHTML = a, document.querySelector(".videocallModal .text-truncate").innerHTML = a;
-                var s = document.getElementById(t).querySelector(".avatar-xs").getAttribute("src");
-                s ? (document.querySelector(".user-own-img .avatar-sm").setAttribute("src", s), document.querySelector(".user-profile-sidebar .profile-img").setAttribute("src", s), document.querySelector(".audiocallModal .img-thumbnail").setAttribute("src", s), document.querySelector(".videocallModal .videocallModal-bg").setAttribute("src", s)) : (document.querySelector(".user-own-img .avatar-sm").setAttribute("src", l), document.querySelector(".user-profile-sidebar .profile-img").setAttribute("src", l), document.querySelector(".audiocallModal .img-thumbnail").setAttribute("src", l), document.querySelector(".videocallModal .videocallModal-bg").setAttribute("src", l));
-                var i = r.querySelector(".avatar-xs").getAttribute("src");
+                o = "users", u(),
+                n = "users-chat";
+                const t = r.getAttribute("id"),
+                a = r.querySelector(".text-truncate").innerHTML,
+                re = r.getAttribute("value");
+                recipientId = re,
+                document.querySelector(".user-profile-sidebar .user-name").innerHTML = a,
+                document.getElementById("users-chat").querySelector(".text-truncate .user-profile-show").innerHTML = a,
+                document.querySelector(".user-profile-desc .text-truncate").innerHTML = a,
+                document.querySelector(".audiocallModal .text-truncate").innerHTML = a,
+                document.querySelector(".videocallModal .text-truncate").innerHTML = a;
+                const s = document.getElementById(t).querySelector(".avatar-xs").getAttribute("src");
+                s ? (document.querySelector(".user-own-img .avatar-sm").setAttribute("src", s),
+                  document.querySelector(".user-profile-sidebar .profile-img").setAttribute("src", s),
+                  document.querySelector(".audiocallModal .img-thumbnail").setAttribute("src", s),
+                  document.querySelector(".videocallModal .videocallModal-bg").setAttribute("src", s)) :
+                  (document.querySelector(".user-own-img .avatar-sm").setAttribute("src", l),
+                    document.querySelector(".user-profile-sidebar .profile-img").setAttribute("src", l),
+                    document.querySelector(".audiocallModal .img-thumbnail").setAttribute("src", l),
+                    document.querySelector(".videocallModal .videocallModal-bg").setAttribute("src", l));
+                const i = r.querySelector(".avatar-xs").getAttribute("src");
                 document.getElementById("users-conversation").querySelectorAll(".left .chat-avatar").forEach(function (e) {
                     i ? e.querySelector("img").setAttribute("src", i) : e.querySelector("img").setAttribute("src", l)
                 }), window.stop()
@@ -178,24 +256,59 @@ function searchContactOnModal() {
         v = document.querySelector(".chat-conversation-list"), g = document.querySelector(".chat-input-feedback");
 
     function p() {
-        var e = 12 <= (new Date).getHours() ? "pm" : "am",
-            t = 12 < (new Date).getHours() ? (new Date).getHours() % 12 : (new Date).getHours(),
-            a = (new Date).getMinutes() < 10 ? "0" + (new Date).getMinutes() : (new Date).getMinutes();
+        const e = 12 <= (new Date).getHours() ? "pm" : "am",
+          t = 12 < (new Date).getHours() ? (new Date).getHours() % 12 : (new Date).getHours(),
+          a = (new Date).getMinutes() < 10 ? "0" + (new Date).getMinutes() : (new Date).getMinutes();
         return t < 10 ? "0" + t + ":" + a + " " + e : t + ":" + a + " " + e
     }
 
     setInterval(p, 1e3);
-    var h = 0;
+    let h = 0;
     r && r.addEventListener("submit", function (e) {
         e.preventDefault();
-        var t = n, a = f.value;
+        const t = n,
+          a = f.value;
         0 === a.length ? (g.classList.add("show"), setTimeout(function () {
             g.classList.remove("show")
         }, 3e3)) : (function (e, t) {
+            const chatMessage = {
+                from_id: sessionStorage.getItem('userId'),
+                to_id: recipientId,
+                senderImg: 'assets/images/users/avatar-2.jpg',
+                msg: t,
+                type: 'CHAT'
+            };
+            stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
+
+
             h++;
-            var a = document.getElementById(e).querySelector(".chat-conversation-list");
-            a.insertAdjacentHTML("beforeend", '<li class="chat-list right" id="chat-list-' + h + '" >                <div class="conversation-list">                    <div class="user-chat-content">                        <div class="ctext-wrap">                            <div class="ctext-wrap-content">                                <p class="mb-0 ctext-content">                                    ' + t + '                                </p>                            </div>                            <div class="dropdown align-self-start message-box-drop">                                <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                                    <i class="ri-more-2-fill"></i>                                </a>                                <div class="dropdown-menu">                                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="collapse" data-bs-target=".replyCollapse">Reply <i class="bx bx-share ms-2 text-muted"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i class="bx bx-share-alt ms-2 text-muted"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between copy-message" href="#" id="copy-message-' + h + '">Copy <i class="bx bx-copy text-muted ms-2"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Mark as Unread <i class="bx bx-message-error text-muted ms-2"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between delete-item" id="delete-item-' + h + '" href="#">Delete <i class="bx bx-trash text-muted ms-2"></i></a>                            </div>                        </div>                    </div>                    <div class="conversation-name">                        <small class="text-muted time">' + p() + '</small>                        <span class="text-success check-message-icon"><i class="bx bx-check"></i></span>                    </div>                </div>            </div>        </li>');
-            var s = document.getElementById("chat-list-" + h);
+            const a = document.getElementById(e).querySelector(".chat-conversation-list");
+            a.insertAdjacentHTML("beforeend", '<li class="chat-list right" id="chat-list-' + h + '" > '
+              + '<div class="conversation-list">' +
+              '<div class="user-chat-content">                        ' +
+              '<div class="ctext-wrap">                            ' +
+              '<div class="ctext-wrap-content">                                ' +
+              '<p class="mb-0 ctext-content">                                    ' +
+              '' + t + '                                ' +
+              '</p>                            ' +
+              '</div>                            ' +
+              '<div class="dropdown align-self-start message-box-drop">' +
+              '<a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                                    ' +
+              '<i class="ri-more-2-fill"></i>                                ' +
+              '</a>' +
+              '<div class="dropdown-menu">                                    ' +
+              '<a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="collapse" data-bs-target=".replyCollapse">Reply <i class="bx bx-share ms-2 text-muted"></i></a>' +
+              '<a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i class="bx bx-share-alt ms-2 text-muted"></i></a>' +
+              '<a class="dropdown-item d-flex align-items-center justify-content-between copy-message" href="#" id="copy-message-' + h + '">Copy <i class="bx bx-copy text-muted ms-2"></i></a>' +
+              '<a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>' +
+              '<a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Mark as Unread <i class="bx bx-message-error text-muted ms-2"></i></a>                                    ' +
+              '<a class="dropdown-item d-flex align-items-center justify-content-between delete-item" id="delete-item-' + h + '" href="#">Delete <i class="bx bx-trash text-muted ms-2"></i></a>' +
+              '</div></div></div>' +
+              '<div class="conversation-name">' +
+              '<small class="text-muted time">' + p() + '</small>' +
+              '<span class="text-success check-message-icon"><i class="bx bx-check"></i></span></div></div></div></li>');
+            // a.insertAdjacentHTML("beforeend", '<li class="chat-list right" id="chat-list-' + h + '" > ' + '<div class="conversation-list">                    <div class="user-chat-content">                        <div class="ctext-wrap">                            <div class="ctext-wrap-content">                                <p class="mb-0 ctext-content">                                    ' + t + '                                </p>                            </div>                            <div class="dropdown align-self-start message-box-drop">                                <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">                                    <i class="ri-more-2-fill"></i>                                </a>                                <div class="dropdown-menu">                                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="collapse" data-bs-target=".replyCollapse">Reply <i class="bx bx-share ms-2 text-muted"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="modal" data-bs-target=".forwardModal">Forward <i class="bx bx-share-alt ms-2 text-muted"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between copy-message" href="#" id="copy-message-' + h + '">Copy <i class="bx bx-copy text-muted ms-2"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Mark as Unread <i class="bx bx-message-error text-muted ms-2"></i></a>                                    <a class="dropdown-item d-flex align-items-center justify-content-between delete-item" id="delete-item-' + h + '" href="#">Delete <i class="bx bx-trash text-muted ms-2"></i></a>                            </div>                        </div>                    </div>                    <div class="conversation-name">                        <small class="text-muted time">' + p() + '</small>                        <span class="text-success check-message-icon"><i class="bx bx-check"></i></span>                    </div>                </div>            </div>        </li>');
+            const s = document.getElementById("chat-list-" + h);
             s.querySelectorAll(".delete-item").forEach(function (e) {
                 e.addEventListener("click", function () {
                     a.removeChild(s)
@@ -210,14 +323,14 @@ function searchContactOnModal() {
     });
     var y = document.querySelector("#channel-conversation");
     document.querySelector("#profile-foreground-img-file-input").addEventListener("change", function () {
-        var e = document.querySelector(".profile-foreground-img"),
-            t = document.querySelector(".profile-foreground-img-file-input").files[0], a = new FileReader;
+        const e = document.querySelector(".profile-foreground-img"),
+          t = document.querySelector(".profile-foreground-img-file-input").files[0], a = new FileReader;
         a.addEventListener(function () {
             e.src = a.result
         }, !1), t && a.readAsDataURL(t)
     }), document.querySelector("#profile-img-file-input").addEventListener("change", function () {
-        var e = document.querySelector(".user-profile-image"),
-            t = document.querySelector(".profile-img-file-input").files[0], a = new FileReader;
+        const e = document.querySelector(".user-profile-image"),
+          t = document.querySelector(".profile-img-file-input").files[0], a = new FileReader;
         a.addEventListener("load", function () {
             e.src = a.result
         }, !1), t && a.readAsDataURL(t)

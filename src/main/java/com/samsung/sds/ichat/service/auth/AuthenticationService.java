@@ -1,4 +1,4 @@
-package com.samsung.sds.ichat.service.impl;
+package com.samsung.sds.ichat.service.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.samsung.sds.ichat.config.jwt.JwtService;
@@ -38,7 +38,7 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
                 .profile(request.getProfile())
-                .status(request.getStatus())
+                .connected(false)
                 .build();
         var savedUser = repository.save(user);
         var jwtToken = jwtService.generateToken(user);
@@ -47,6 +47,8 @@ public class AuthenticationService {
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
+                .userId(savedUser.getId())
+                .name(savedUser.getFirstname() + savedUser.getLastname())
                 .build();
     }
 
@@ -66,6 +68,8 @@ public class AuthenticationService {
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
+                .userId(user.getId())
+                .name(user.getFirstname() + user.getLastname())
                 .build();
     }
 
@@ -113,6 +117,8 @@ public class AuthenticationService {
                 var authResponse = AuthenticationResponse.builder()
                         .accessToken(accessToken)
                         .refreshToken(refreshToken)
+                        .userId(user.getId())
+                        .name(user.getFirstname() + user.getLastname())
                         .build();
                 new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
             }

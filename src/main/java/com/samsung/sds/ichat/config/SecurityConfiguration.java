@@ -23,7 +23,14 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 public class SecurityConfiguration {
 
     private final String[] WHITE_LIST_URL = {
-            "/","/login","/logout","register","/change-password","forgot-password",
+            "/",
+            "/ws",
+            "/ws/**",
+            "/login",
+            "/logout",
+            "register",
+            "/change-password",
+            "forgot-password",
             "/assets/**",
             "/api/v1/auth/**",
             "/v2/api-docs",
